@@ -1,0 +1,13 @@
+# 忽略数据文件夹
+data/
+
+# 忽略刚才警告里提到的 IDE 配置文件（这些也没必要上传）
+.idea/
+.vscode/
+
+# 忽略 Python 缓存
+__pycache__/
+*.py[cod]
+
+# 忽略你那个提取脚本生成的目标文件夹（假设叫 output）
+/target_folder_name/
