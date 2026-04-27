@@ -17,7 +17,7 @@ def insert_to_mysql():
     conn = pymysql.connect(**db_config)
     cursor = conn.cursor()
 
-    dataset_path = "../data/leetcode_data/note_data"
+    dataset_path = "../source_data/leetcode_data/note_data"
 
     # 遍历数据集
     for folder_name in os.listdir(dataset_path):

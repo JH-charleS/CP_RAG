@@ -46,7 +46,7 @@ def extract_specific_files(source_dir, target_dir):
 
 # 如果你想单独运行测试这个脚本，保留下面的代码：
 if __name__ == "__main__":
-    src = r"D:\S\Project_py\CP_RAG\cp_doc\国家集训队历年论文集"
-    dst = r"D:\S\Project_py\CP_RAG\temp_data"
+    src = r"/source_data\Competitive-Programming-Docs\国家集训队历年论文集"
+    dst = r"/source_data\temp_data"
     total = extract_specific_files(src, dst)
     print(f"任务完成，共提取文档：{total} 个")

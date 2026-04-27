@@ -5,7 +5,7 @@ import opencc
 converter = opencc.OpenCC('t2s')
 
 # 假设你的数据集放在 'leetcode_dataset' 文件夹下
-dataset_path = '../data/leetcode_data/note_data'
+dataset_path = '../source_data/leetcode_data/note_data'
 
 for root, dirs, files in os.walk(dataset_path):
     for file in files:
