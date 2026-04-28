@@ -8,3 +8,8 @@ pymilvus
 sentence-transformers
 httpx
 numpy
+python-docx
+python-pptx
+pdfplumber
+PyMuPDF
+paddleocr
