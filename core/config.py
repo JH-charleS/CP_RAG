@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     mysql_port: int = Field(default=3306, alias="MYSQL_PORT")
     mysql_user: str = Field(default="root", alias="MYSQL_USER")
     mysql_password: str = Field(default="", alias="MYSQL_PASSWORD")
-    mysql_db: str = Field(default="cp_rag", alias="MYSQL_DB")
+    mysql_db: str = Field(default="cp_rag_db", alias="MYSQL_DB")
     mysql_charset: str = Field(default="utf8mb4", alias="MYSQL_CHARSET")
     mysql_min_size: int = Field(default=1, alias="MYSQL_MIN_SIZE")
     mysql_max_size: int = Field(default=10, alias="MYSQL_MAX_SIZE")
