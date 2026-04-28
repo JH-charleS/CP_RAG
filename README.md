@@ -205,4 +205,5 @@ python utils/ingest_raw_to_milvus.py \
 
 ## License
 
-仅用于学习与面试展示，可按你的实际需要补充开源协议（MIT/Apache-2.0 等）。
+This project is licensed under the MIT License.  
+See the [LICENSE](./LICENSE) file for details.
