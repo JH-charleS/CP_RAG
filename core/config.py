@@ -56,7 +56,7 @@ class Settings(BaseSettings):
         alias="MILVUS_OUTPUT_FIELDS",
         description="Comma-separated output fields for Milvus search results.",
     )
-    rag_top_k: int = Field(default=5, alias="RAG_TOP_K")
+    rag_top_k: int = Field(default=2, alias="RAG_TOP_K")
     embedding_model_name: str = Field(default="BAAI/bge-m3", alias="EMBEDDING_MODEL_NAME")
     llm_provider: str = Field(default="openai_compatible", alias="LLM_PROVIDER")
     llm_api_base_url: str = Field(default="https://api.openai.com/v1", alias="LLM_API_BASE_URL")

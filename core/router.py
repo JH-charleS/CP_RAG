@@ -260,15 +260,30 @@ async def fetch_solution_by_id(problem_id: str) -> SolutionRecord | None:
     pool = MySQLPool.get_pool()
     async with pool.acquire() as connection:
         async with connection.cursor(aiomysql.DictCursor) as cursor:
-            await cursor.execute(
-                """
-                SELECT id, title, context, ac_code, source, created_at
-                FROM solutions
-                WHERE UPPER(id) = UPPER(%s)
-                LIMIT 1
-                """,
-                (problem_id,),
-            )
+            try:
+                await cursor.execute(
+                    """
+                    SELECT id, title, context, ac_code, source, created_at
+                    FROM solutions
+                    WHERE UPPER(id) = UPPER(%s)
+                    LIMIT 1
+                    """,
+                    (problem_id,),
+                )
+            except aiomysql.MySQLError as exc:
+                message = str(exc).lower()
+                if "unknown column 'context'" not in message:
+                    raise
+                # Backward compatibility for schema using `content` instead of `context`.
+                await cursor.execute(
+                    """
+                    SELECT id, title, content, ac_code, source, created_at
+                    FROM solutions
+                    WHERE UPPER(id) = UPPER(%s)
+                    LIMIT 1
+                    """,
+                    (problem_id,),
+                )
             row: dict[str, Any] | None = await cursor.fetchone()
             if row is None:
                 return None
@@ -294,13 +309,26 @@ async def rag_search(query: str, *, top_k: int | None = None) -> list[RAGHit]:
 
     vector = await embed_query(query)
     output_fields = [field.strip() for field in settings.milvus_output_fields.split(",") if field.strip()]
-    hits_raw = await MilvusClient.search(
-        collection_name=settings.milvus_collection,
-        query_vector=vector,
-        vector_field=settings.milvus_vector_field,
-        output_fields=output_fields,
-        limit=top_k or settings.rag_top_k,
-    )
+    try:
+        hits_raw = await MilvusClient.search(
+            collection_name=settings.milvus_collection,
+            query_vector=vector,
+            vector_field=settings.milvus_vector_field,
+            output_fields=output_fields,
+            limit=top_k or settings.rag_top_k,
+        )
+    except Exception as exc:
+        message = str(exc).lower()
+        if "unknown column 'context'" not in message:
+            raise
+        fallback_fields = [("content" if field == "context" else field) for field in output_fields]
+        hits_raw = await MilvusClient.search(
+            collection_name=settings.milvus_collection,
+            query_vector=vector,
+            vector_field=settings.milvus_vector_field,
+            output_fields=fallback_fields,
+            limit=top_k or settings.rag_top_k,
+        )
     hits: list[RAGHit] = []
     for item in hits_raw:
         score = float(item.get("score", 0.0))
@@ -394,11 +422,14 @@ def build_llm_payload(
     user_query: str,
     route_result: QueryRouteResult,
     *,
-    model: str = "gpt-4o-mini",
+    model: str | None = None,
     temperature: float = 0.2,
     max_tokens: int = 1200,
 ) -> LLMPayload:
     """Assemble final payload for upstream LLM API."""
+    settings = get_settings()
+    if not model:
+        model = settings.llm_model
     retrieval_context = "未识别到题号，或知识库中暂无对应题解。"
     rag_context = _format_rag_context(route_result.rag_hits)
     metadata: dict[str, str] = {"tier": "tier1_only", "problem_id": ""}
