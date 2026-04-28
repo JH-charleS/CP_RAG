@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException
@@ -49,8 +50,36 @@ def _history_key(session_id: str) -> str:
 
 
 def _is_finish_confirmation(text: str) -> bool:
-    keywords = ("已完成", "完成了", "结束当前问题", "下一个问题", "新问题", "切换问题", "换题")
-    return any(token in text for token in keywords)
+    lowered = text.lower().strip()
+    strong_positive = (
+        "已完成",
+        "完成了",
+        "结束当前问题",
+        "结束这个问题",
+        "进入下一题",
+        "下一个问题",
+        "新问题",
+        "切换问题",
+        "换题",
+        "ac了",
+        "通过了",
+        "懂了",
+        "明白了",
+    )
+    weak_positive = ("谢谢", "ok", "好的", "继续", "next")
+    negative = ("没懂", "不会", "卡住", "不明白", "再讲", "继续这个题", "还没")
+
+    score = 0
+    if any(token in lowered for token in strong_positive):
+        score += 2
+    if any(token in lowered for token in weak_positive):
+        score += 1
+    if any(token in lowered for token in negative):
+        score -= 2
+
+    if re.search(r"(finish|complete)\s*(current|this)?\s*(question|problem)?", lowered):
+        score += 2
+    return score >= 2
 
 
 async def _load_history(session_id: str, limit: int = 8) -> list[ChatMessage]:
@@ -112,6 +141,9 @@ async def query_route(payload: QueryRequest) -> QueryResponse:
 
         pipeline_result = await run_query_pipeline(payload.query)
         if pipeline_result.from_cache and pipeline_result.cached_answer is not None:
+            if incoming_problem is not None:
+                active_problem_id = incoming_problem.normalized_id
+                await redis.hset(state_key, mapping={"active_problem_id": active_problem_id})
             await _append_history(session_id, "user", payload.query)
             await _append_history(session_id, "assistant", pipeline_result.cached_answer)
             return QueryResponse(

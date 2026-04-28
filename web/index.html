@@ -40,6 +40,16 @@
     .assistant { color: #86efac; }
     .meta { color: #cbd5e1; font-size: 12px; margin-top: 4px; }
     .input-wrap { display: flex; gap: 8px; margin-top: 12px; }
+    .toolbar { display: flex; gap: 8px; margin: 10px 0; align-items: center; }
+    .toolbar input {
+      width: 220px;
+      background: #0b1220;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 13px;
+    }
     textarea {
       flex: 1;
       resize: vertical;
@@ -61,6 +71,7 @@
       font-size: 14px;
     }
     button:disabled { opacity: 0.7; cursor: wait; }
+    .btn-secondary { background: #334155; width: 180px; }
   </style>
 </head>
 <body>
@@ -71,6 +82,10 @@
     </div>
     <div class="card">
       <div id="chat" class="chat"></div>
+      <div class="toolbar">
+        <input id="sessionIdInput" value="default" placeholder="会话ID（可自定义）" />
+        <button id="finishBtn" class="btn-secondary" type="button">结束当前问题</button>
+      </div>
       <div class="input-wrap">
         <textarea id="queryInput" placeholder="例如：LeetCode 1 two sum 怎么做？"></textarea>
         <button id="sendBtn" type="button">发送问题</button>
@@ -80,7 +95,9 @@
   <script>
     const chat = document.getElementById("chat");
     const sendBtn = document.getElementById("sendBtn");
+    const finishBtn = document.getElementById("finishBtn");
     const queryInput = document.getElementById("queryInput");
+    const sessionIdInput = document.getElementById("sessionIdInput");
 
     function appendMessage(role, text, meta = "") {
       const block = document.createElement("div");
@@ -96,36 +113,44 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    async function sendQuery() {
-      const query = queryInput.value.trim();
+    async function sendQuery(forceFinish = false) {
+      const query = queryInput.value.trim() || (forceFinish ? "结束当前问题" : "");
       if (!query) return;
+      const sessionId = (sessionIdInput.value || "default").trim();
 
       appendMessage("user", query);
-      queryInput.value = "";
+      if (!forceFinish) queryInput.value = "";
       sendBtn.disabled = true;
+      finishBtn.disabled = true;
       sendBtn.textContent = "请求中...";
 
       try {
         const res = await fetch("/api/v1/query", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query })
+          body: JSON.stringify({ query, session_id: sessionId, finish_current: forceFinish })
         });
         const data = await res.json();
         if (!res.ok) {
           appendMessage("assistant", "请求失败: " + (data.detail || "unknown error"));
         } else {
-          appendMessage("assistant", data.answer, `from_cache=${data.from_cache}, matched_problem_id=${data.matched_problem_id}, rag_hits=${data.rag_hits}`);
+          appendMessage(
+            "assistant",
+            data.answer,
+            `session=${data.session_id}, from_cache=${data.from_cache}, matched_problem_id=${data.matched_problem_id}, active_problem_id=${data.active_problem_id}, waiting_for_completion=${data.waiting_for_completion}, rag_hits=${data.rag_hits}`
+          );
         }
       } catch (err) {
         appendMessage("assistant", "网络异常: " + err);
       } finally {
         sendBtn.disabled = false;
+        finishBtn.disabled = false;
         sendBtn.textContent = "发送问题";
       }
     }
 
     sendBtn.addEventListener("click", sendQuery);
+    finishBtn.addEventListener("click", () => sendQuery(true));
     queryInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
