@@ -6,3 +6,6 @@ source_data/
 # 忽略 Python 缓存
 __pycache__/
 *.py[cod]
+
+# 本地环境变量配置（可能包含 API Key）
+.env

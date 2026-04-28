@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     redis_password: str | None = Field(default=None, alias="REDIS_PASSWORD")
     redis_prefix: str = Field(default="cp_rag", alias="REDIS_PREFIX")
     redis_max_connections: int = Field(default=100, alias="REDIS_MAX_CONNECTIONS")
+    redis_cache_similarity_threshold: float = Field(default=0.95, alias="REDIS_CACHE_SIMILARITY_THRESHOLD")
+    redis_cache_max_entries: int = Field(default=2000, alias="REDIS_CACHE_MAX_ENTRIES")
 
     mysql_host: str = Field(default="127.0.0.1", alias="MYSQL_HOST")
     mysql_port: int = Field(default=3306, alias="MYSQL_PORT")
@@ -47,6 +49,20 @@ class Settings(BaseSettings):
     milvus_timeout: float = Field(default=10.0, alias="MILVUS_TIMEOUT")
     milvus_secure: bool = Field(default=False, alias="MILVUS_SECURE")
     milvus_collection: str = Field(default="cp_rag_solutions", alias="MILVUS_COLLECTION")
+    milvus_vector_field: str = Field(default="embedding", alias="MILVUS_VECTOR_FIELD")
+    milvus_text_field: str = Field(default="context", alias="MILVUS_TEXT_FIELD")
+    milvus_output_fields: str = Field(
+        default="id,title,context,source",
+        alias="MILVUS_OUTPUT_FIELDS",
+        description="Comma-separated output fields for Milvus search results.",
+    )
+    rag_top_k: int = Field(default=5, alias="RAG_TOP_K")
+    embedding_model_name: str = Field(default="BAAI/bge-m3", alias="EMBEDDING_MODEL_NAME")
+    llm_provider: str = Field(default="openai_compatible", alias="LLM_PROVIDER")
+    llm_api_base_url: str = Field(default="https://api.openai.com/v1", alias="LLM_API_BASE_URL")
+    llm_api_key: str = Field(default="", alias="LLM_API_KEY")
+    llm_model: str = Field(default="gpt-4o-mini", alias="LLM_MODEL")
+    llm_timeout_seconds: float = Field(default=60.0, alias="LLM_TIMEOUT_SECONDS")
 
 
 @lru_cache
