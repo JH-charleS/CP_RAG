@@ -74,6 +74,7 @@ class QueryPipelineResult:
 _EMBEDDER: SentenceTransformer | None = None
 
 
+# Tier-1 ID extraction patterns for mainstream platforms.
 _PROBLEM_PATTERNS: list[tuple[str, re.Pattern[str], Any]] = [
     (
         "luogu",
@@ -338,7 +339,7 @@ async def rag_search(query: str, *, top_k: int | None = None) -> list[RAGHit]:
 
 
 async def route_query(query: str) -> QueryRouteResult:
-    """Run query router with Tier 1 + Tier 2 + Tier 3 retrieval."""
+    """Run query router retrieval stages (Tier2 exact + Tier3 semantic)."""
     matched = extract_problem_id(query)
     rag_hits = await rag_search(query)
     if matched is None:
