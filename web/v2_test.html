@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CP_RAG v2 Web Test</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #0f172a; color: #e2e8f0; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    p { margin: 0; color: #94a3b8; }
+    .chat { min-height: 360px; max-height: 60vh; overflow-y: auto; padding: 12px; background: #020617; border-radius: 10px; border: 1px solid #1e293b; }
+    .msg { margin: 10px 0; line-height: 1.6; white-space: pre-wrap; }
+    .user { color: #93c5fd; }
+    .assistant { color: #86efac; }
+    .meta { color: #cbd5e1; font-size: 12px; margin-top: 4px; }
+    .toolbar { display: flex; gap: 8px; margin: 10px 0; align-items: center; }
+    .toolbar input[type="file"] { max-width: 280px; }
+    .input-wrap { display: flex; gap: 8px; margin-top: 12px; }
+    textarea { flex: 1; resize: vertical; min-height: 90px; background: #0b1220; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 10px; font-size: 14px; }
+    button { width: 140px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    button:disabled { opacity: 0.7; cursor: wait; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>CP_RAG v2 测试页</h1>
+      <p>支持文本 query + 可选图片上传（jpg/png），调用 /api/v2/query。</p>
+    </div>
+    <div class="card">
+      <div id="chat" class="chat"></div>
+      <div class="toolbar">
+        <input id="imageInput" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
+      </div>
+      <div class="input-wrap">
+        <textarea id="queryInput" placeholder="例如：请解释这道题的状态转移"></textarea>
+        <button id="sendBtn" type="button">发送问题</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const chat = document.getElementById("chat");
+    const sendBtn = document.getElementById("sendBtn");
+    const queryInput = document.getElementById("queryInput");
+    const imageInput = document.getElementById("imageInput");
+
+    function appendMessage(role, text, meta = "") {
+      const block = document.createElement("div");
+      block.className = "msg " + role;
+      block.textContent = (role === "user" ? "你: " : "助手: ") + text;
+      chat.appendChild(block);
+      if (meta) {
+        const metaDiv = document.createElement("div");
+        metaDiv.className = "meta";
+        metaDiv.textContent = meta;
+        chat.appendChild(metaDiv);
+      }
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendQuery() {
+      const query = queryInput.value.trim();
+      if (!query) return;
+      const imageFile = imageInput.files[0] || null;
+      appendMessage("user", query, imageFile ? `image=${imageFile.name}` : "image=none");
+
+      sendBtn.disabled = true;
+      sendBtn.textContent = "请求中...";
+      try {
+        const form = new FormData();
+        form.append("query", query);
+        if (imageFile) form.append("image", imageFile);
+        const res = await fetch("/api/v2/query", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) {
+          appendMessage("assistant", "请求失败: " + (data.detail || "unknown error"));
+        } else {
+          appendMessage(
+            "assistant",
+            data.answer,
+            `intent=${data.intent}, rewritten_query=${data.rewritten_query}, rag_hits=${data.rag_hits}`
+          );
+        }
+      } catch (err) {
+        appendMessage("assistant", "网络异常: " + err);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "发送问题";
+      }
+    }
+
+    sendBtn.addEventListener("click", sendQuery);
+    queryInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendQuery();
+      }
+    });
+  </script>
+</body>
+</html>

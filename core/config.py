@@ -64,6 +64,22 @@ class Settings(BaseSettings):
     llm_model: str = Field(default="gpt-4o-mini", alias="LLM_MODEL")
     llm_timeout_seconds: float = Field(default=60.0, alias="LLM_TIMEOUT_SECONDS")
 
+    v2_api_prefix: str = Field(default="/api/v2", alias="V2_API_PREFIX")
+    v2_milvus_collection: str = Field(default="cp_rag_document_v2", alias="V2_MILVUS_COLLECTION")
+    v2_parent_chunk_size: int = Field(default=512, alias="V2_PARENT_CHUNK_SIZE")
+    v2_parent_chunk_overlap: int = Field(default=64, alias="V2_PARENT_CHUNK_OVERLAP")
+    v2_child_chunk_size: int = Field(default=128, alias="V2_CHILD_CHUNK_SIZE")
+    v2_child_chunk_overlap: int = Field(default=32, alias="V2_CHILD_CHUNK_OVERLAP")
+    v2_rag_top_k: int = Field(default=4, alias="V2_RAG_TOP_K")
+    v2_qwen_api_base_url: str = Field(default="https://api.openai.com/v1", alias="V2_QWEN_API_BASE_URL")
+    v2_qwen_api_key: str = Field(default="", alias="V2_QWEN_API_KEY")
+    v2_qwen_text_model: str = Field(default="qwen-plus", alias="V2_QWEN_TEXT_MODEL")
+    v2_qwen_vision_model: str = Field(default="qwen-vl-plus", alias="V2_QWEN_VISION_MODEL")
+    v2_bert_classifier_model_path: str = Field(
+        default=r"D:\S\heimatool\RAG\integrated_qa_system\rag_qa\models\bert_query_classifier",
+        alias="V2_BERT_CLASSIFIER_MODEL_PATH",
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -203,6 +203,33 @@ python utils/ingest_raw_to_milvus.py \
 
 ---
 
+## CP_RAG v2（LangChain 重构）
+
+v2 保持与 v1 并行，不改动原有接口与启动方式。新增能力：
+
+- `multipart/form-data` 输入：`query` + 可选 `jpg/png` 图片
+- Qwen 多模态识别并与文本 query 融合
+- 本地 BERT 意图识别 + Qwen query 改写后再检索
+- Markdown 父子文档切分重建 Milvus（子块检索 + 父块语义补全）
+
+### 启动 v2
+
+```bash
+python app_run_v2.py
+```
+
+默认接口：
+
+- `POST http://127.0.0.1:8001/api/v2/query`
+
+### 重建 v2 Milvus
+
+```bash
+python utils_v2/rebuild_milvus_langchain.py --md-dir source_data/md_data
+```
+
+---
+
 ## License
 
 This project is licensed under the MIT License.  
