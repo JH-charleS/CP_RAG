@@ -60,11 +60,20 @@ CP_RAG/
 │  └─ routes/
 │     ├─ health.py
 │     └─ query.py
+├─ api_v2/
+│  ├─ router.py
+│  └─ routes/
+│     └─ query.py
 ├─ core/
 │  ├─ config.py
 │  ├─ llm_client.py
 │  ├─ router.py
 │  └─ session_manager.py
+├─ core_v2/
+│  ├─ intent_classifier.py
+│  ├─ pipeline.py
+│  ├─ qwen_client.py
+│  └─ retriever.py
 ├─ db/
 │  ├─ redis_client.py
 │  ├─ mysql_pool.py
@@ -72,13 +81,19 @@ CP_RAG/
 ├─ utils/
 │  ├─ insert_data.py
 │  └─ ingest_raw_to_milvus.py
+├─ utils_v2/
+│  └─ rebuild_milvus_langchain.py
 ├─ web/
-│  └─ index.html
+│  ├─ index.html
+│  └─ v2_test.html
 ├─ docs/
 │  ├─ PROJECT_STRUCTURE.md
 │  └─ INTERVIEW_PROJECT_OVERVIEW.md
 ├─ .env.example
 ├─ app_run.py
+├─ app_run_v2.py
+├─ app_run_v2_web.py
+├─ main_v2.py
 ├─ start.bat
 └─ requirements.txt
 ```
@@ -222,11 +237,38 @@ python app_run_v2.py
 
 - `POST http://127.0.0.1:8001/api/v2/query`
 
+### v2 网页测试（文本 + 图片）
+
+```bash
+python app_run_v2_web.py
+```
+
+启动后会自动打开：
+
+- `http://127.0.0.1:8001/`
+
+页面支持：
+
+- 文本 query
+- 上传 `jpg/png`
+- 展示 `intent`、`rewritten_query`、`rag_hits`
+
 ### 重建 v2 Milvus
 
 ```bash
-python utils_v2/rebuild_milvus_langchain.py --md-dir source_data/md_data
+python utils_v2/rebuild_milvus_langchain.py \
+  --source-dir source_data/raw_data \
+  --selected-pdf-dir source_data/selected_pdf_100 \
+  --max-pdf 100 \
+  --batch-size 256
 ```
+
+说明：
+
+- 脚本会先从 `raw_data` 中筛选并复制前 `100` 个 `pdf`
+- 再执行父（默认 512）子（默认 128）切分
+- 子块批量写入 `V2_MILVUS_COLLECTION`（默认 `cp_rag_document_v2`）
+- 控制台会打印解析、切分和分批入库进度
 
 ---
 
